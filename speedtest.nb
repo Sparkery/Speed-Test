@@ -1,0 +1,31 @@
+spark = Table[RandomReal[{-5, 5}], {100}]; (*or any list*)
+
+store = 0;
+
+foxes = Compile[{x, y}, (x + y) / 2];
+
+revised = Table[0, {Length[spark]}];
+
+leppard[list_] := (store = list; revised[[1]] = list[[1]]; 
+  For[i = 2, i < Length[list], i++, 
+   revised[[i]] = foxes[list[[i - 1]], list[[i + 1]]]]; 
+  revised[[Length[list]]] = list[[Length[list]]]; revised) 
+
+converge = 0;
+
+scary = Compile[{x, y}, (x - y)^2];
+
+paw[list1_, list2_] := (
+  error = Abs[list2[[1]] - list1[[1]]]^2;
+  For[k = 2, k <= Length[spark], 
+   k++, (trial = scary[list1[[k]], list2[[k]]]; 
+    If [trial > error, error = trial, ])];
+  If[error < 0.001, False, True]
+  )
+
+leppard[spark];
+
+fennec[list_] := (leppard[list]; 
+   NestWhile[leppard , revised, paw[#1, store] &]);
+
+First[Timing[fennec[spark]]]
